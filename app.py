@@ -49,46 +49,44 @@ def get_history_data(fruit_name: str,
         query_job = st.session_state.bq_client.query(query)
         # Wait for the job to complete
         result = query_job.to_dataframe()
-        msg = 'Data berhasil didapatkan dari bigquery, Hasil sudah ditampilkan ke user' if len(result) > 0 else 'Data Tidak Tersedia'
+        msg = f'Data is succesfully retrieved and deliver to the user do not make up any data. Data statistics: {result.describe()}' if len(result) > 0 else 'Data Not Available'
     except Exception as err:
-        print(err)
         result = pd.DataFrame()
-        msg = f'Data gagal didapatkan dari bigquery. error: {err}'
+        msg = f'There is error while retrieving the data. Error: {err}'
     return result, msg
 
 def get_item_trend(fruit_name: str,
                 start_date: str = '2024-01-01',
                 end_date: str = '2024-01-30',
-                plot: bool=False) -> str:
+                ) -> str:
 
     data_history, _ = get_history_data(fruit_name, start_date, end_date)
     x = np.arange(len(data_history))
     y = np.array(data_history.sort_values('date')['sales_qty'].values, dtype=float)
-    slope, intercept, r_value, p_value, std_err = linregress(x, y)
+    slope, intercept, _, _, _ = linregress(x, y)
 
     # Determine trend direction based on slope
     if slope > 0:
-        trend = 'Trend Naik'
+        trend = 'The Trend is Up'
     elif slope < 0:
-        trend = 'Trend Turun'
+        trend = 'The Trend is Down'
     else:
-        trend = 'Trend Stabil'
+        trend = 'The Trend is Flat'
 
-    if plot:
-        x_plot = data_history.sort_values('date')['date'].values
-        fig = plt.figure()
-        plt.plot(x_plot, data_history['sales_qty'], marker='o', label='Actual Sales')
-        plt.plot(x_plot, intercept + slope * x, color='red', label='Trendline', linestyle='-.')
-        plt.xticks(rotation=45)
+    x_plot = data_history.sort_values('date')['date'].values
+    fig = plt.figure()
+    plt.plot(x_plot, data_history['sales_qty'], marker='o', label='Actual Sales')
+    plt.plot(x_plot, intercept + slope * x, color='red', label='Trendline', linestyle='-.')
+    plt.xticks(rotation=45)
 
-        plt.xlabel('Date')
-        plt.ylabel('Sales')
-        plt.title('Sales Trend with Trendline')
-        plt.legend()
-        trend += ' , Hasil plot sudah ditampilkan ke user.'
-        st.pyplot(fig)
+    plt.xlabel('Date')
+    plt.ylabel('Sales')
+    plt.title('Sales Trend with Trendline')
+    plt.legend()
+    trend += ' , Plot is shown to the user.'
+    # st.pyplot(fig)
 
-    return trend
+    return trend, fig
 
 def research_paper(topic: str):
     topc = topic.replace(" ", '%20')
@@ -100,7 +98,7 @@ def research_paper(topic: str):
 # Functions declaration
 get_history_data_yaml = FunctionDeclaration(
     name="get_history_data",
-    description="Get historical sell of selected fruit within a timeframe",
+    description="Get historical sell of selected fruit within a timeframe, delivery it directly to the user.",
     parameters={
         "type": "object",
         "properties": {
@@ -122,7 +120,7 @@ get_history_data_yaml = FunctionDeclaration(
 
 get_trendline_yaml = FunctionDeclaration(
     name="get_item_trend",
-    description="Determine the trend up/down selected fruit within a timeframe",
+    description="Determine the trend up/down selected fruit within a timeframe. The graph is directly shown to the user",
     parameters={
         "type": "object",
         "properties": {
@@ -137,10 +135,6 @@ get_trendline_yaml = FunctionDeclaration(
             "end_date": {
                 "type": "string",
                 "description": "the end date to query the data in format YYYY-MM-DD",
-            },
-            "plot": {
-                "type": "boolean",
-                "description": "Do the user want want to plot it or not True/False",
             },
         },
     },
@@ -173,16 +167,11 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="expanded",
 )
-# "st.session_state: ", st.session_state
-
-
-# with st.sidebar:
-#     "Developed by [**Rasidin**](https://www.linkedin.com/in/said-rasidin/)"
 
 st.title("🤖 Chat With AI Agent")
 st.write(
 """
-In this example, The Agent is using Gemini build in function-calling fetch data from BigQuery
+This is AI Gemini Agent, it's build using function-calling fetch data from BigQuery
 and also search new research paper in ArXiv
 """)
 
@@ -203,8 +192,10 @@ if 'gemini_history' not in st.session_state:
     st.session_state.gemini_history = []
 
 st.session_state.model = GenerativeModel(
-                            "gemini-1.0-pro-002",
-                            system_instruction=["You are AI Assistant Developed by Rasidin that help getting sales fruit data from BigQuery and search new research paper in ArXiv Please use the tools that provided to give the concise answers, do not make up any answers, if tools can not provide the answer just say you cannot provide it. Jangan membuat - buat data sendiri! kecuali dari hasil tool yang dipakai. Do not make up data if not provide by the tools!"],
+                            model_name="gemini-1.0-pro-002",
+                            system_instruction=["You are AI Assistant Developed by Rasidin, your task are retrieve data user want using provided tools and search new research paper in ArXiv. Do not asnwer any question outside these task!",
+                                            "Please use the tools that provided to give the concise answers, do not make up any answers.",
+                                            "Do not make up data if not provide by the tools!"],
                             generation_config=GenerationConfig(temperature=0,
                                                                 top_p=0.95,
                                                                 top_k=10,
@@ -243,13 +234,19 @@ def reset_conversation():
 st.button(label='Reset', key='reset', on_click=reset_conversation)
 
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"].replace("$", "\\$"))  # noqa: W605
+    with st.chat_message(message["role"], avatar='🧑🏻' if message['role']=='user' else '🤖'):
+        st.markdown(message["content"])  # noqa: W605
         try:
             with st.expander("Function calls, parameters, and responses"):
                 st.markdown(message["backend_details"])
         except KeyError:
             pass
+
+        if 'graph' in message:
+            st.pyplot(message['graph'])
+        if 'table' in message:
+            print('table')
+            st.dataframe(message['table'])
 
 if prompt := st.chat_input(placeholder="Ask me about fruit database and reaseach paper on arXiv..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -260,11 +257,6 @@ if prompt := st.chat_input(placeholder="Ask me about fruit database and reaseach
 
         message_placeholder = st.empty()
         full_response = "" # pylint: disable=invalid-name
-        # chat = model.start_chat(response_validation=True)
-        # client = bigquery.Client()
-
-        print(prompt)
-
         response = st.session_state.chat.send_message(prompt)
         print(response)
         response = response.candidates[0].content.parts[0]
@@ -284,12 +276,27 @@ if prompt := st.chat_input(placeholder="Ask me about fruit database and reaseach
 
                 if response.function_call.name == "get_history_data":
                     result, api_response = get_history_data(**params)
-                    st.dataframe(result.head())
+                    st.dataframe(result.head(10))
                     api_requests_and_responses.append([response.function_call.name, params, api_response])
+                    st.session_state.messages.append(
+                        {
+                            "role": "assistant",
+                            "content": "Data",
+                            "table": result.head(10),
+                        }
+                    )
 
                 if response.function_call.name == "get_item_trend":
-                    api_response = get_item_trend(**params) # pylint: disable=invalid-name
+                    api_response, plot_ = get_item_trend(**params) # pylint: disable=invalid-name
                     api_requests_and_responses.append([response.function_call.name, params, api_response])
+                    st.pyplot(plot_)
+                    st.session_state.messages.append(
+                        {
+                            "role": "assistant",
+                            "content": "Graph",
+                            "graph": plot_,
+                        }
+                    )
 
                 if response.function_call.name == "research_paper":
                     api_response = research_paper(**params)
