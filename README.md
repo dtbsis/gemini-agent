@@ -1,4 +1,4 @@
-# Praktis LLM Agent
+# Gemini LLM Agent
 Implementation of LLM using Gemini Function Calling.
 ![Image](llm_agent.drawio.png)
 ## How to Use
