@@ -1,6 +1,6 @@
 # Praktis LLM Agent
 Implementation of LLM using Gemini Function Calling.
-
+![Image](llm_agent.drawio.png)
 ## How to Use
 - Create a new environment, python=3.12
 ```
