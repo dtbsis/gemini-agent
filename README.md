@@ -1,12 +1,12 @@
 # Praktis LLM Agent
-Implementasi LLM menggunakan Gemini Function Calling.
+Implementation of LLM using Gemini Function Calling.
 
-## Cara Menggunakan
-- Buat env baru, python=3.12
+## How to Use
+- Create a new environment, python=3.12
 ```
 python -m venv myenv
 ```
-- Buat `.env` Environment Variables file
+- Create `.env` Environment Variables file
 ```
 GOOGLE_APPLICATION_CREDENTIALS = path\to\credentials.json
 PROJECT_ID = ""
@@ -20,4 +20,4 @@ pip install -r requirements.txt
 ```
 streamlit run app.py
 ```
-Buka `http://localhost:8501/` di browser
+Open `http://localhost:8501/` in your browser

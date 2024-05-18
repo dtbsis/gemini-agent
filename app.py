@@ -179,8 +179,8 @@ with st.expander("Sample prompts", expanded=True):
     st.write(
         """
         - How the trend of the apple from jan to march 2024?
-        - Sekarang lagi rame LLM ni, cari penelitian terbaru terkait llm untuk data analytics?
-        - Liat data penjualan pisang dong feb 2024?
+        - Now all people talking about LLM, find new research about LLM for data analytics?
+        - Get banana sales data in Feb 2024?
     """
 )
 
