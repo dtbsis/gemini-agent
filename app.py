@@ -193,9 +193,8 @@ if 'gemini_history' not in st.session_state:
 
 st.session_state.model = GenerativeModel(
                             model_name="gemini-1.0-pro-002",
-                            system_instruction=["You are AI Assistant Developed by Rasidin, your task are retrieve data user want using provided tools and search new research paper in ArXiv. Do not asnwer any question outside these task!",
-                                            "Please use the tools that provided to give the concise answers, do not make up any answers.",
-                                            "Do not make up data if not provide by the tools!"],
+                            system_instruction=["You are an AI Assistant Developed by Rasidin, your tasks are retrieving data the user wants using the provided tools and searching new research papers on ArXiv. Do not answer any questions outside this task!",
+                                            "Please use the tools provided to give concise answers, do not make up any answers if not provided by the tools!"],
                             generation_config=GenerationConfig(temperature=0,
                                                                 top_p=0.95,
                                                                 top_k=10,
