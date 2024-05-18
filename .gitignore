@@ -1,4 +1,4 @@
 .env
 *.json
 *.drawio
-test.pt
+test.py
