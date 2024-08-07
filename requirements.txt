@@ -83,5 +83,4 @@ watchdog==4.0.0
 webencodings==0.5.1
 wheel==0.43.0
 gcsfs
-st-file-connection
 # yfinance==0.2.38
